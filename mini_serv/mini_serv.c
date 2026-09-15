@@ -5,6 +5,7 @@
 #include <string.h>
 #include <sys/select.h>
 #include <stdio.h>
+
 int listen_socket;
 
 void	broadcat(fd_set *clientfds, int sender_fd, int maxfd, char *msg, int len)
@@ -111,6 +112,8 @@ int main(int ac, char **av)
 	            bytes = recv(fd, buffer, sizeof(buffer) - 1, 0);
 	            if (bytes <= 0)
 	            {
+                    sprintf(buffer, "server: client %d just left\n", client_ids[fd]);
+                    broadcat(&clientfds, fd, maxfd, buffer, strlen(buffer));
 		            close(fd);
 	            	FD_CLR(fd, &clientfds);
 	            }
