@@ -244,3 +244,99 @@ It only tells the server that the listening socket is ready.
 Error handling
 
 If select() returns a negative value, the listening socket is closed, Fatal error is written to stderr, and the program exits with status 1.
+
+## ## Checkpoint 06 — Accept connections
+
+The server can now accept an incoming TCP connection using `accept()`.
+
+After `select()` reports that the listening socket is ready, the server calls:
+
+```c
+clientfd = accept(sockfd, 0, 0);
+```
+
+### Listening socket vs client socket
+
+The listening socket and the client socket have different responsibilities.
+
+```text
+                    SERVER
+                      │
+                listening socket
+                    sockfd
+                      │
+                   listen()
+                      │
+                  select()
+                      │
+                connection arrives
+                      │
+                   accept()
+                      │
+                      ▼
+                 client socket
+                   clientfd
+```
+
+The listening socket stays open so the server can accept more connections.
+
+`accept()` creates a **new file descriptor** dedicated to communicating with that particular client.
+
+For example:
+
+```text
+sockfd  = 3    → listening socket
+clientfd = 4   → Client 0
+```
+
+If another client connects:
+
+```text
+sockfd  = 3    → listening socket
+clientfd = 5   → Client 1
+```
+
+The listening socket remains `3`.
+
+### Adding the client to `select()`
+
+After accepting a client, its file descriptor is added to the master `fd_set`:
+
+This tells the server:
+
+> "I also want to monitor this client for incoming data."
+
+The server also updates `maxfd` if necessary:
+
+```c
+if (clientfd > maxfd)
+	maxfd = clientfd;
+```
+
+This is needed because `select()` expects the highest monitored file descriptor plus one.
+
+### Current flow
+
+```text
+socket()
+    ↓
+bind()
+    ↓
+listen()
+    ↓
+select()
+    ↓
+connection arrives
+    ↓
+accept()
+    ↓
+new clientfd
+    ↓
+FD_SET(clientfd, &readfds)
+    ↓
+select() again
+```
+
+At this point, the server can accept a client connection and keep its socket in the set of monitored file descriptors.
+
+The next step is to detect when an **existing client socket** is ready and use `recv()` to read its data.
