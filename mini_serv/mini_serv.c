@@ -3,9 +3,12 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <strings.h>
+#include <sys/select.h>
 
 int main(int ac, char **av)
 {
+    fd_set				clientfds;
+
     if (ac != 2)
     {
         write(2, "Wrong number of arguments\n", 26);
@@ -34,7 +37,13 @@ int main(int ac, char **av)
 		write(2, "Fatal error\n", 12);
 		exit(1);
 	}
-	// close(listen_socket);
+
+    if (listen(listen_socket, 10) < 0)
+    {
+	    close(listen_socket);
+	    write(2, "Fatal error\n", 12);
+	    exit(1);
+    }
 
     return 0;
 }
