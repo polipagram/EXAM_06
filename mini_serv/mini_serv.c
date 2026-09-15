@@ -23,6 +23,7 @@ int main(int ac, char **av)
 {
     fd_set				clientfds;
     fd_set				currentfds;
+    fd_set              writefds;
     int maxfd;
     int bytes;
     char buffer[1024];
@@ -73,8 +74,9 @@ int main(int ac, char **av)
     while (1)
     {
 	    currentfds = clientfds;
+        writefds = clientfds;
 
-	    if (select(maxfd + 1, &currentfds, 0, 0, 0) < 0)
+	    if (select(maxfd + 1, &currentfds, &writefds, NULL, NULL) < 0)
 	    {
 		    close(listen_socket);
 		    write(2, "Fatal error\n", 12);
@@ -104,7 +106,7 @@ int main(int ac, char **av)
                 if (client_fd > maxfd)
                     maxfd = client_fd;
                 sprintf(buffer, "server: client %d just arrived\n", id);
-                broadcat(&clientfds, client_fd, maxfd, buffer, strlen(buffer));
+                broadcat(&writefds, client_fd, maxfd, buffer, strlen(buffer));
                 id++;
             }
             else
@@ -113,7 +115,7 @@ int main(int ac, char **av)
 	            if (bytes <= 0)
 	            {
                     sprintf(buffer, "server: client %d just left\n", client_ids[fd]);
-                    broadcat(&clientfds, fd, maxfd, buffer, strlen(buffer));
+                    broadcat(&writefds, fd, maxfd, buffer, strlen(buffer));
 		            close(fd);
 	            	FD_CLR(fd, &clientfds);
 	            }
@@ -128,7 +130,7 @@ int main(int ac, char **av)
                                 client_buff[fd][client_len[fd]] = '\0';
                                 sprintf(message, "client %d: %s", client_ids[fd], client_buff[fd]);
 
-                                broadcat(&clientfds, fd, maxfd, client_buff[fd], client_len[fd]);
+                                broadcat(&writefds, fd, maxfd, client_buff[fd], client_len[fd]);
                                 client_len[fd] = 0;
                             }
                     }
