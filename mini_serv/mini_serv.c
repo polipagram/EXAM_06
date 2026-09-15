@@ -10,6 +10,8 @@ int main(int ac, char **av)
     fd_set				clientfds;
     fd_set				currentfds;
     int maxfd;
+    int bytes;
+    char buffer[1024];
 
     if (ac != 2)
     {
@@ -61,21 +63,41 @@ int main(int ac, char **av)
 		    exit(1);
 	    }
 
-	    if (FD_ISSET(listen_socket, &currentfds))
+	    for (int fd = 0; fd <= maxfd; fd++)
 	    {
-		    client_fd = accept(listen_socket, 0, 0);
-		    if (client_fd < 0)
-		    {
-			    close(listen_socket);
-			    write(2, "Fatal error\n", 12);
-			    exit(1);
-		    }
+		    if (!FD_ISSET(fd, &currentfds))
+			    continue;
 
-		    FD_SET(client_fd, &clientfds);
+            if (fd == listen_socket)
+            {
+                client_fd = accept(listen_socket, 0, 0);
+                if (client_fd < 0)
+                {
+                    close(listen_socket);
+                    write(2, "Fatal error\n", 12);
+                    exit(1);
+                }
 
-		    if (client_fd > maxfd)
-			    maxfd = client_fd;
-	    }
+                FD_SET(client_fd, &clientfds);
+
+                if (client_fd > maxfd)
+                    maxfd = client_fd;
+            }
+            else
+            {
+	            bytes = recv(fd, buffer, sizeof(buffer) - 1, 0);
+	            if (bytes <= 0)
+	            {
+		            close(fd);
+	            	FD_CLR(fd, &clientfds);
+	            }
+	            else
+	            {
+		            buffer[bytes] = '\0';
+		            write(1, buffer, bytes);
+	            }
+            }
+        }
     }
     return 0;
 }
