@@ -4,6 +4,18 @@
 #include <netinet/in.h>
 #include <strings.h>
 #include <sys/select.h>
+#include <stdio.h>
+
+void	broadcat(fd_set *clientfds, int sender_fd, int maxfd, char *msg, int len)
+{
+	int	fd;
+
+	for (fd = 0; fd <= maxfd; fd++)
+	{
+		if (FD_ISSET(fd, clientfds) && fd != sender_fd)
+			send(fd, msg, len, 0);
+	}
+}
 
 int main(int ac, char **av)
 {
@@ -12,6 +24,8 @@ int main(int ac, char **av)
     int maxfd;
     int bytes;
     char buffer[1024];
+    int	client_ids[1024];
+    int id = 0;
 
     if (ac != 2)
     {
@@ -78,10 +92,13 @@ int main(int ac, char **av)
                     exit(1);
                 }
 
+                write(1, "client connected\n", 17);
+                
                 FD_SET(client_fd, &clientfds);
 
                 if (client_fd > maxfd)
                     maxfd = client_fd;
+                id++;
             }
             else
             {
@@ -93,8 +110,7 @@ int main(int ac, char **av)
 	            }
 	            else
 	            {
-		            buffer[bytes] = '\0';
-		            write(1, buffer, bytes);
+		            broadcat(&clientfds, fd, maxfd, buffer, bytes);
 	            }
             }
         }
