@@ -190,3 +190,57 @@ If listen() fails:
 Fatal error is written to stderr, the listening socket is closed, and the program exits with status 1.
 
 At this point, the server can listen for incoming connections, but it does not accept or communicate with clients yet.
+
+## Checkpoint 05 — Wait for events with select()
+
+The server now uses select() to wait for activity on the listening socket.
+
+fd_set
+
+An fd_set is used to keep track of the file descriptors that the server wants to monitor.
+
+fd_set fds;
+
+The set is initialized with:
+
+FD_ZERO();
+
+Then the listening socket is added:
+
+FD_SET(sockfd, &fds);
+
+The server can now wait for activity.
+
+What select() does
+
+select() blocks until one or more monitored file descriptors becomes ready.
+
+At this point, only the listening socket is monitored.
+
+When a client attempts to connect, the listening socket becomes ready for reading, which means that accept() can be called.
+
+The flow is:
+
+socket()
+    ↓
+bind()
+    ↓
+listen()
+    ↓
+FD_ZERO()
+    ↓
+FD_SET(sockfd)
+    ↓
+select()
+    ↓
+waiting for a connection
+
+Important behavior
+
+select() does not accept the connection itself.
+
+It only tells the server that the listening socket is ready.
+
+Error handling
+
+If select() returns a negative value, the listening socket is closed, Fatal error is written to stderr, and the program exits with status 1.

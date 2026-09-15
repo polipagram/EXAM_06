@@ -44,6 +44,17 @@ int main(int ac, char **av)
 	    write(2, "Fatal error\n", 12);
 	    exit(1);
     }
+    
+    FD_ZERO(&clientfds);
+	FD_SET(listen_socket, &clientfds);
+
+    if (select(listen_socket + 1, &clientfds, 0, 0, 0) < 0)
+	{
+		close(listen_socket);
+		write(2, "Fatal error\n", 12);
+		exit(1);
+	}
+	close(listen_socket);
 
     return 0;
 }
