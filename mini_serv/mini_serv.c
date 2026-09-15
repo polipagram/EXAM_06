@@ -29,7 +29,7 @@ int main(int ac, char **av)
     char buffer[1024];
     int	client_ids[1024];
     int id = 0;
-    char	client_buff[1024][1024];
+    char	client_buff[1024][10241];
     int		client_len[1024];
 
     if (ac != 2)
@@ -126,7 +126,7 @@ int main(int ac, char **av)
                         client_buff[fd][client_len[fd]++] = buffer[i];
                             if (buffer[i] == '\n')
                             {
-                                char message[2048];
+                                char message[20481];
                                 client_buff[fd][client_len[fd]] = '\0';
                                 sprintf(message, "client %d: %s", client_ids[fd], client_buff[fd]);
 
