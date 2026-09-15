@@ -340,3 +340,103 @@ select() again
 At this point, the server can accept a client connection and keep its socket in the set of monitored file descriptors.
 
 The next step is to detect when an **existing client socket** is ready and use `recv()` to read its data.
+
+
+## Checkpoint 07 — Accept connections and event loop
+
+The server now enters a continuous event loop.
+
+The purpose of the loop is to keep the server running and repeatedly wait for activity on the file descriptors it is monitoring.
+
+The general flow is:
+
+            SERVER STARTS
+                 │
+                 ▼
+        create listening socket
+                 │
+                 ▼
+              bind()
+                 │
+                 ▼
+             listen()
+                 │
+                 ▼
+          initialize fd_set
+                 │
+                 ▼
+          ┌──────────────┐
+          │     LOOP     │
+          └──────┬───────┘
+                 │
+                 ▼
+              select()
+                 │
+                 ▼
+        something happened?
+           │            │
+           │            │
+           ▼            ▼
+       new client    client activity
+           │            │
+           ▼            ▼
+        accept()     handle client
+           │
+           ▼
+      add new fd
+           │
+           └───────┐
+                   ▼
+              LOOP AGAIN
+
+The server does not exit after handling one event. It returns to select() and waits for the next event.
+
+Listening socket
+
+The listening socket is included in the set of monitored file descriptors.
+
+When it becomes ready, this means that a new connection is waiting and the server can call:
+
+accept(sockfd, 0, 0);
+
+accept() creates a new file descriptor for the connected client.
+
+The listening socket remains open so that the server can continue accepting other clients.
+
+Monitoring clients
+
+After a client is accepted, its file descriptor is added to the set monitored by the server.
+
+The server can therefore monitor:
+
+listening socket
+      +
+client socket
+      +
+client socket
+      +
+client socket
+      ...
+
+All of these descriptors are handled through the same event loop.
+
+select() and the event loop
+
+select() waits until at least one monitored file descriptor becomes ready.
+
+Because select() modifies the fd_set, the server keeps a master set containing all descriptors it wants to monitor and uses a copy when calling select().
+
+Conceptually:
+
+master set
+    │
+    │ copy
+    ▼
+working set
+    │
+    │ select()
+    ▼
+only ready descriptors
+
+After the ready descriptors are handled, the loop starts again and waits for the next event.
+This event-driven loop is the foundation of the chat server. It allows one server process to monitor many clients without blocking while waiting for one particular client.

@@ -8,6 +8,8 @@
 int main(int ac, char **av)
 {
     fd_set				clientfds;
+    fd_set				currentfds;
+    int maxfd;
 
     if (ac != 2)
     {
@@ -44,27 +46,36 @@ int main(int ac, char **av)
 	    write(2, "Fatal error\n", 12);
 	    exit(1);
     }
-    
+    maxfd = listen_socket;
     FD_ZERO(&clientfds);
 	FD_SET(listen_socket, &clientfds);
-
-    if (select(listen_socket + 1, &clientfds, 0, 0, 0) < 0)
-	{
-		close(listen_socket);
-		write(2, "Fatal error\n", 12);
-		exit(1);
-	}
-
-    int client_fd = accept(listen_socket, 0, 0);
-    if (client_fd < 0)
+    int client_fd;
+    while (1)
     {
-	    close(listen_socket);
-	    write(2, "Fatal error\n", 12);
-	    exit(1);    
-    }
-    FD_SET(client_fd, &clientfds);
-    close(client_fd);
-	close(listen_socket);
+	    currentfds = clientfds;
 
+	    if (select(maxfd + 1, &currentfds, 0, 0, 0) < 0)
+	    {
+		    close(listen_socket);
+		    write(2, "Fatal error\n", 12);
+		    exit(1);
+	    }
+
+	    if (FD_ISSET(listen_socket, &currentfds))
+	    {
+		    client_fd = accept(listen_socket, 0, 0);
+		    if (client_fd < 0)
+		    {
+			    close(listen_socket);
+			    write(2, "Fatal error\n", 12);
+			    exit(1);
+		    }
+
+		    FD_SET(client_fd, &clientfds);
+
+		    if (client_fd > maxfd)
+			    maxfd = client_fd;
+	    }
+    }
     return 0;
 }
