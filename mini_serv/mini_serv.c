@@ -6,6 +6,11 @@
 #include <sys/select.h>
 #include <stdio.h>
 
+char buffer[1024];
+int	client_ids[1024];
+int id = 0;
+char	client_buff[1024][10241];
+int		client_len[1024];
 int listen_socket;
 
 void	broadcat(fd_set *clientfds, int sender_fd, int maxfd, char *msg, int len)
@@ -26,11 +31,6 @@ int main(int ac, char **av)
     fd_set              writefds;
     int maxfd;
     int bytes;
-    char buffer[1024];
-    int	client_ids[1024];
-    int id = 0;
-    char	client_buff[1024][10241];
-    int		client_len[1024];
 
     if (ac != 2)
     {
@@ -130,7 +130,7 @@ int main(int ac, char **av)
                                 client_buff[fd][client_len[fd]] = '\0';
                                 sprintf(message, "client %d: %s", client_ids[fd], client_buff[fd]);
 
-                                broadcat(&writefds, fd, maxfd, client_buff[fd], client_len[fd]);
+                                broadcat(&writefds, fd, maxfd, message, strlen(message));
                                 client_len[fd] = 0;
                             }
                     }
