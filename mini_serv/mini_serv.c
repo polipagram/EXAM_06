@@ -5,6 +5,7 @@
 #include <strings.h>
 #include <sys/select.h>
 #include <stdio.h>
+int listen_socket;
 
 void	broadcat(fd_set *clientfds, int sender_fd, int maxfd, char *msg, int len)
 {
@@ -12,7 +13,7 @@ void	broadcat(fd_set *clientfds, int sender_fd, int maxfd, char *msg, int len)
 
 	for (fd = 0; fd <= maxfd; fd++)
 	{
-		if (FD_ISSET(fd, clientfds) && fd != sender_fd)
+		if (FD_ISSET(fd, clientfds) && fd != sender_fd && fd != listen_socket)
 			send(fd, msg, len, 0);
 	}
 }
@@ -26,6 +27,8 @@ int main(int ac, char **av)
     char buffer[1024];
     int	client_ids[1024];
     int id = 0;
+    char	client_buff[1024][1024];
+    int		client_len[1024];
 
     if (ac != 2)
     {
@@ -33,7 +36,7 @@ int main(int ac, char **av)
         exit(1);
     }
 
-    int listen_socket = socket(AF_INET, SOCK_STREAM, 0);
+    listen_socket = socket(AF_INET, SOCK_STREAM, 0);
 
     if (listen_socket < 0)
     {
@@ -91,6 +94,8 @@ int main(int ac, char **av)
                     write(2, "Fatal error\n", 12);
                     exit(1);
                 }
+                client_ids[client_fd] = id;
+                client_len[client_fd] = 0;
 
                 write(1, "client connected\n", 17);
                 
@@ -110,7 +115,17 @@ int main(int ac, char **av)
 	            }
 	            else
 	            {
-		            broadcat(&clientfds, fd, maxfd, buffer, bytes);
+                    for (int i = 0; i < bytes; i++)
+                    {
+                        client_buff[fd][client_len[fd]++] = buffer[i];
+                            if (buffer[i] == '\n')
+                            {
+                                client_buff[fd][client_len[fd]] = '\0';
+                                
+                                broadcat(&clientfds, fd, maxfd, client_buff[fd], client_len[fd]);
+                                client_len[fd] = 0;
+                            }
+                    }
 	            }
             }
         }
