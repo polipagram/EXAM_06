@@ -124,8 +124,10 @@ int main(int ac, char **av)
                         client_buff[fd][client_len[fd]++] = buffer[i];
                             if (buffer[i] == '\n')
                             {
+                                char message[2048];
                                 client_buff[fd][client_len[fd]] = '\0';
-                                
+                                sprintf(message, "client %d: %s", client_ids[fd], client_buff[fd]);
+
                                 broadcat(&clientfds, fd, maxfd, client_buff[fd], client_len[fd]);
                                 client_len[fd] = 0;
                             }
