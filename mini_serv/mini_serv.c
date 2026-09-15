@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <strings.h>
+#include <string.h>
 #include <sys/select.h>
 #include <stdio.h>
 int listen_socket;
@@ -97,12 +97,13 @@ int main(int ac, char **av)
                 client_ids[client_fd] = id;
                 client_len[client_fd] = 0;
 
-                write(1, "client connected\n", 17);
                 
                 FD_SET(client_fd, &clientfds);
-
+                
                 if (client_fd > maxfd)
                     maxfd = client_fd;
+                sprintf(buffer, "server: client %d just arrived\n", id);
+                broadcat(&clientfds, client_fd, maxfd, buffer, strlen(buffer));
                 id++;
             }
             else
