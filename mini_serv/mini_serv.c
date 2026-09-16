@@ -69,11 +69,11 @@ int main(int ac , char **av)
     if(listen_socket < 0)
         fatal();
     struct sockaddr_in addr;
-
+    int port = atoi(av[1]);
     bzero(&addr, sizeof(addr));
     addr.sin_family = AF_INET;
-    addr.sin_addr.s_addr = htonl(2130706433);
-    addr.sin_port = htons(atoi(av[1]));
+    addr.sin_addr.s_addr = htonl(2130706433);  //same as 127 | 1 << 24
+    addr.sin_port = htons(atoi(av[1])); // same as port << 8 | port >> 8
 
     if(bind(listen_socket, (struct sockaddr *)&addr, sizeof(addr)) < 0)
     {
