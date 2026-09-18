@@ -69,7 +69,7 @@ int main(int ac , char **av)
     if(listen_socket < 0)
         fatal();
     struct sockaddr_in addr;
-    int port = atoi(av[1]);
+    // int port = atoi(av[1]);
     bzero(&addr, sizeof(addr));
     addr.sin_family = AF_INET;
     addr.sin_addr.s_addr = htonl(2130706433);  //same as 127 | 1 << 24
@@ -110,7 +110,7 @@ int main(int ac , char **av)
             if(fd == listen_socket)
             {
                 client_fd = accept(listen_socket, 0, 0);
-                if(client_fd >= 0)
+                if(client_fd > 0)
                 {
 
                     client_ids[client_fd] = id;
@@ -151,7 +151,6 @@ int main(int ac , char **av)
                         message = malloc(len + 1);
                         if(!message)
                             fatal();
-                        // the char after newline in the buff
                         save = newline[1];
                         newline[1] = '\0';
                         strcpy(message , client_buff[fd]);
